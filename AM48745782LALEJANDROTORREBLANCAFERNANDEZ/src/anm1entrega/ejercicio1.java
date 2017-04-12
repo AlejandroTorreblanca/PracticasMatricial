@@ -18,17 +18,20 @@ public class ejercicio1 {
      */
     public static void main(String[] args) throws Matrices.ErrorMatrices {
 
-        double[][] A=auxiliar.Matrices.MatrizRango(8, 8, 8);
-        double[][][][] D=auxiliar.Matrices.division4(A);
-        System.out.println("A \n"+Matrices.toString(A));
-        double[][] B=auxiliar.Matrices.reune4(D);
-        System.out.println("B \n"+Matrices.toString(B));
-
-
-
-
-
-
+        int n=1024;
+        double[][] A=auxiliar.Matrices.MatrizRango(n,n,n);
+        double[][] B=auxiliar.Matrices.MatrizRango(n,n,n);
+        long t0=System.currentTimeMillis();
+        double[][] C=auxiliar.Matrices.productoStrassen(A, B);
+        long t1=System.currentTimeMillis();
+        double[][] D=auxiliar.Matrices.producto(A, B);
+        long t2=System.currentTimeMillis();
+        System.out.println("Tiempo en calcular el producto mediante Strassen de dos matrices de tamaño "+n+": "+(t1-t0)+" milisegundos" );
+        //System.out.println("\n"+Matrices.toString(C));
+        System.out.println("Tiempo en calcular el producto normal de dos matrices de tamaño "+n+": "+(t2-t1)+" milisegundos" );
+        //System.out.println("B \n"+Matrices.toString(D));
+        System.out.println("norma1: "+Matrices.norma1(C)+"\nnorma2: "+ Matrices.norma1(D));
+        
 
 
     }

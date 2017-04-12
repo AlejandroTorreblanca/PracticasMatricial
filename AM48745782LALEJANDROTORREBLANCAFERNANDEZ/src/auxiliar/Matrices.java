@@ -1740,4 +1740,51 @@ public class Matrices {
         }
         return A;
     }
+    
+    public static double[][][][] unpasoStressen(double[][][][] A,double[][][][] B) throws ErrorMatrices
+    {
+        int n;
+        n = A[0][0].length;
+        double[][][][] C = new double[2][2][n][n];
+        double[][][] M=new double[7][n/2][n/2];
+        
+        M[0]=Matrices.producto(Matrices.suma(A[0][0],A[1][1]), Matrices.suma(B[0][0],B[1][1]));
+        M[1]=Matrices.producto(Matrices.suma(A[1][0], A[1][1]), B[0][0]);
+        M[2]=Matrices.producto(A[0][0], Matrices.resta(B[0][1], B[1][1]));
+        M[3]=Matrices.producto(A[1][1], Matrices.resta(B[1][0], B[0][0]));
+        M[4]=Matrices.producto(Matrices.suma(A[0][0],A[0][1]), B[1][1]);
+        M[5]=Matrices.producto(Matrices.resta(A[1][0],A[0][0]), Matrices.suma(B[0][0],B[0][1]));
+        M[6]=Matrices.producto(Matrices.resta(A[0][1],A[1][1]), Matrices.suma(B[1][0],B[1][1]));
+
+        C[0][0]=Matrices.resta(Matrices.suma(Matrices.suma(M[0],M[3]),M[6]),M[4]);
+        C[0][1]=Matrices.suma(M[2],M[4]);
+        C[1][0]=Matrices.suma(M[1],M[3]);
+        C[1][1]=Matrices.suma(Matrices.suma(Matrices.resta(M[0],M[1]),M[2]),M[5]);
+        
+        return C;
+    }
+
+    public static double[][] productoStrassen(double[][] A,double[][] B) throws ErrorMatrices
+    {
+        int n;
+        n = A[0].length;
+        double[][][][] auxC=new double[2][2][n][n];
+        double[][][][] auxA=division4(A);
+        double[][][][] auxB=division4(B);
+        if(n<2)
+        {
+            auxC[0][0]=Matrices.suma(Matrices.producto(auxA[0][0], auxB[0][0]), Matrices.producto(auxA[0][1], auxB[1][0]));
+            auxC[1][0]=Matrices.suma(Matrices.producto(auxA[1][0], auxB[0][0]), Matrices.producto(auxA[1][1], auxB[1][0]));
+            auxC[0][1]=Matrices.suma(Matrices.producto(auxA[0][1], auxB[0][1]), Matrices.producto(auxA[0][1], auxB[1][1]));
+            auxC[1][1]=Matrices.suma(Matrices.producto(auxA[1][0], auxB[0][1]), Matrices.producto(auxA[1][1], auxB[1][1]));
+            return reune4(auxC);
+        }
+        else
+        {
+            auxC=unpasoStressen(auxA, auxB);
+            return reune4(auxC);
+        }
+    }
+    
 }
+
