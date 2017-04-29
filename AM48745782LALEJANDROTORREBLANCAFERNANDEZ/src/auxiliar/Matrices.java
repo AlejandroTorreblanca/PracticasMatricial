@@ -157,6 +157,9 @@ public class Matrices {
         return At;
     }
 
+    
+    
+    
     /**
      * Devuelve la matriz adjunta de una matriz COMPLEJA
      */
@@ -1708,6 +1711,13 @@ public class Matrices {
         
     }
     
+    /**
+     * Dada una matriz A de dimensión par n = 2m devuelva una lista múltiple double[2][2][m][m] que contiene
+        cada uno de los menores que resultan al descomponer A en cuatro matrices de dimensión m.
+     * @param A matriz que se desea descomponer
+     * @return lista con los menores de A de dimensión m.
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
     public static double[][][][] division4(double[][] A)throws ErrorMatrices
     {
         int n;
@@ -1725,6 +1735,13 @@ public class Matrices {
         
     }
     
+    /**
+     * Dada una lista múltiple double[2][2][m][m] con cuatro matrices de dimensión m, devuelve la matriz A de dimensión
+     * n = 2m..
+     * @param Ad lista múltiple de la que se desea obtener la matriz formada por los menores.
+     * @return Matriz resultado de juntar los menores de dimensión m.
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
     public static double[][] reune4(double[][][][] Ad)throws ErrorMatrices
     {
         int n;
@@ -1741,6 +1758,14 @@ public class Matrices {
         return A;
     }
     
+    /**
+     * Dadas dos listas múltiples double[2][2][m][m] A y B devuelve una lista múltiple double[2][2][m][m]
+        C construida con el algoritmo de Strassen.
+     * @param A 
+     * @param B
+     * @return
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
     public static double[][][][] unpasoStressen(double[][][][] A,double[][][][] B) throws ErrorMatrices
     {
         int n;
@@ -1748,22 +1773,30 @@ public class Matrices {
         double[][][][] C = new double[2][2][n][n];
         double[][][] M=new double[7][n/2][n/2];
         
-        M[0]=Matrices.producto(Matrices.suma(A[0][0],A[1][1]), Matrices.suma(B[0][0],B[1][1]));
-        M[1]=Matrices.producto(Matrices.suma(A[1][0], A[1][1]), B[0][0]);
-        M[2]=Matrices.producto(A[0][0], Matrices.resta(B[0][1], B[1][1]));
-        M[3]=Matrices.producto(A[1][1], Matrices.resta(B[1][0], B[0][0]));
-        M[4]=Matrices.producto(Matrices.suma(A[0][0],A[0][1]), B[1][1]);
-        M[5]=Matrices.producto(Matrices.resta(A[1][0],A[0][0]), Matrices.suma(B[0][0],B[0][1]));
-        M[6]=Matrices.producto(Matrices.resta(A[0][1],A[1][1]), Matrices.suma(B[1][0],B[1][1]));
-
-        C[0][0]=Matrices.resta(Matrices.suma(Matrices.suma(M[0],M[3]),M[6]),M[4]);
-        C[0][1]=Matrices.suma(M[2],M[4]);
-        C[1][0]=Matrices.suma(M[1],M[3]);
-        C[1][1]=Matrices.suma(Matrices.suma(Matrices.resta(M[0],M[1]),M[2]),M[5]);
+        M[0]=productoStrassen(suma(A[0][0],A[1][1]), suma(B[0][0],B[1][1]));
+        M[1]=productoStrassen(suma(A[1][0], A[1][1]), B[0][0]);
+        M[2]=productoStrassen(A[0][0], resta(B[0][1], B[1][1]));
+        M[3]=productoStrassen(A[1][1], resta(B[1][0], B[0][0]));
+        M[4]=productoStrassen(suma(A[0][0],A[0][1]), B[1][1]);
+        M[5]=productoStrassen(resta(A[1][0],A[0][0]), suma(B[0][0],B[0][1]));
+        M[6]=productoStrassen(resta(A[0][1],A[1][1]), suma(B[1][0],B[1][1]));
+        
+        C[0][0]=resta(suma(suma(M[0],M[3]),M[6]),M[4]);
+        C[0][1]=suma(M[2],M[4]);
+        C[1][0]=suma(M[1],M[3]);
+        C[1][1]=suma(suma(resta(M[0],M[1]),M[2]),M[5]);
         
         return C;
     }
 
+    /**
+     * devuelve el producto de dos matrices de dimensión N = 2 utilizando el producto normal si N<60 o
+     *  haciendo la división en 4 matrices de A y de B para usarlas como argumentos del método unpasoStrassen.
+     * @param A
+     * @param B
+     * @return
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
     public static double[][] productoStrassen(double[][] A,double[][] B) throws ErrorMatrices
     {
         int n;
@@ -1771,12 +1804,12 @@ public class Matrices {
         double[][][][] auxC=new double[2][2][n][n];
         double[][][][] auxA=division4(A);
         double[][][][] auxB=division4(B);
-        if(n<2)
+        if(n<60)
         {
-            auxC[0][0]=Matrices.suma(Matrices.producto(auxA[0][0], auxB[0][0]), Matrices.producto(auxA[0][1], auxB[1][0]));
-            auxC[1][0]=Matrices.suma(Matrices.producto(auxA[1][0], auxB[0][0]), Matrices.producto(auxA[1][1], auxB[1][0]));
-            auxC[0][1]=Matrices.suma(Matrices.producto(auxA[0][1], auxB[0][1]), Matrices.producto(auxA[0][1], auxB[1][1]));
-            auxC[1][1]=Matrices.suma(Matrices.producto(auxA[1][0], auxB[0][1]), Matrices.producto(auxA[1][1], auxB[1][1]));
+            auxC[0][0]=suma(producto(auxA[0][0], auxB[0][0]), producto(auxA[0][1], auxB[1][0]));
+            auxC[1][0]=suma(producto(auxA[1][0], auxB[0][0]), producto(auxA[1][1], auxB[1][0]));
+            auxC[0][1]=suma(producto(auxA[0][0], auxB[0][1]), producto(auxA[0][1], auxB[1][1]));
+            auxC[1][1]=suma(producto(auxA[1][0], auxB[0][1]), producto(auxA[1][1], auxB[1][1]));
             return reune4(auxC);
         }
         else
@@ -1786,5 +1819,320 @@ public class Matrices {
         }
     }
     
+    /**
+     * Método para calcular la solución de un sistema Ax=b mediante descenso en la dirección del gradiente.
+     * @param A
+     * @param b
+     * @return
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
+    public static double[] solveGradienteDescenso(double[][] A, double[] b) throws ErrorMatrices
+    {
+        int n = A[0].length;
+        double tol=1E-8;
+        int MAXITER=500;
+        int iteracion=0;
+        double[] x=new double[n];
+        
+        //Realizamos la primera aproximación:
+        double[] r=resta(producto(A, x),b);
+        double aux1=producto(r, r);
+        double aux2=producto(producto(A, r), r);
+        double t=-aux1/aux2;
+        x=suma(x, producto(t, r));
+        //Mientras que no alcancemos el numero máximo de iteraciones o lleguemos a una precisión aceptable seguimos iterando.
+        while ((iteracion<MAXITER) && (norma(r)>tol)) 
+        {            
+            r=resta(producto(A, x),b);
+            aux1=producto(r, r);
+            aux2=producto(producto(A, r), r);
+            t=-aux1/aux2;
+            x=suma(x, producto(t, r));
+            iteracion++;
+        }
+       
+        if(iteracion<MAXITER)
+        {
+            System.out.println("GradienteDescenso converge en "+iteracion+" iteraciones.");
+            return x;
+        }
+        else
+        {
+            System.out.println("Superado el número máximo de iteraciones en el método solveGradienteDescenso");
+            throw new ErrorMatrices();
+        }
+    }
+    
+    
+    
+    /**
+     * Metodo de Jacobi para aproximar la solución de la ecuación Ax = b 
+     * @param A
+     * @param b
+     * @param tol    tolerancia para condición de parada ( ||Ax-b|| < tolerancia )
+     * @param nmaxit    numero máximo de iteraciones 
+     * @param x0     aproximación inicial
+     * @param print  imprime las distintas iteraciones
+     * @return
+     * @throws auxiliar.Matrices.ErrorMatrices por inconsitencia en los datos, porque haya ceros
+     * en la diagonal de A o porque no haya convergencia en nmax iteraciones
+     */
+    
+    public static double[] iterJacobi(double[][] A, double[] b, double tol, int nmaxit, 
+            double[] x0,boolean print)throws ErrorMatrices{
+        if(!ifCuadrada(A)){
+            System.out.println(" Error: Matriz no cuadrada");
+            throw new ErrorMatrices();
+        }
+        int n=A.length;
+        if(b.length != n || x0.length != n ){
+            System.out.println(" Error: dimensiones incompatibles");
+            throw new ErrorMatrices();
+        }
+        double[] xa=copia(x0);
+        //double[] xb=copia(x0);
+        double erroradmisible= tol * tol * norma(b) * norma(b);
+        
+        for (int k = 0; k < nmaxit; k++) {
+            double norma=0;
+            double[] residual=new double[n];
+            for (int i = 0; i < n; i++) {
+                residual[i]=-b[i];
+                for (int j = 0; j < n; j++) {
+                    residual[i] += A[i][j]*xa[j];   
+                }
+                norma += residual[i]*residual[i];
+            }
+            if(norma < erroradmisible){
+                System.out.println("Jacobi converge en "+ k + " iteraciones");
+                System.out.println("|| A x - b || = "+ Math.sqrt(norma));
+                return xa;
+            }
+            if(print){
+            System.out.println("k= " + k + "\t  || A x_k - b || = "+ Math.sqrt(norma));
+            }
+            for (int i = 0; i < n; i++) {
+                xa[i] -= 1. / A[i][i] * residual[i];
+            }
+        }
+        System.out.println("Error Jacobi: No hay convergencia en "+ nmaxit +
+                " iteraciones");
+        throw new ErrorMatrices();
+        
+    }
+    
+        /**
+     * Metodo de Gauss-Seidel para aproximar la solución de la ecuación Ax = b 
+     * @param A
+     * @param b
+     * @param tol    tolerancia para condición de parada ( ||Ax-b|| < tolerancia )
+     * @param nmaxit    numero máximo de iteraciones 
+     * @param x0     aproximación inicial
+     * @param print  imprime las distintas iteraciones
+     * @return
+     * @throws auxiliar.Matrices.ErrorMatrices por inconsitencia en los datos, porque haya ceros
+     * en la diagonal de A o porque no haya convergencia en nmax iteraciones
+     */
+    
+    public static double[] iterGaussSeidel(double[][] A, double[] b, double tol, int nmaxit, 
+            double[] x0,boolean print)throws ErrorMatrices{
+        if(!ifCuadrada(A)){
+            System.out.println(" Error: Matriz no cuadrada");
+            throw new ErrorMatrices();
+        }
+        int n=A.length;
+        if(b.length != n || x0.length != n ){
+            System.out.println(" Error: dimensiones incompatibles");
+            throw new ErrorMatrices();
+        }
+        double[] xa=copia(x0);
+        //double[] xb=copia(x0);
+        double erroradmisible= tol * tol * norma(b) * norma(b);
+        
+        for (int k = 0; k < nmaxit; k++) {
+            double norma=0;
+            double[] residual=new double[n];
+            for (int i = 0; i < n; i++) {
+                residual[i]=-b[i];
+                for (int j = 0; j < n; j++) {
+                    residual[i] += A[i][j]*xa[j];   
+                }
+                norma += residual[i]*residual[i];
+                xa[i] -= 1. / A[i][i] * residual[i];
+            }
+            if(norma < erroradmisible){
+                System.out.println("Gauss-Seidel converge en "+ k + " iteraciones");
+                System.out.println("|| A x - b || = "+ Math.sqrt(norma));
+                return xa;
+            }
+            if(print){
+            System.out.println("k= " + k + "\t  || A x_k - b || = "+ Math.sqrt(norma));
+            }
+            
+        }
+        System.out.println("Error Gauss-Seidel: No hay convergencia en "+ nmaxit +
+                " iteraciones");
+        throw new ErrorMatrices();
+        
+    }
+    
+        /**
+     * Metodo de relajacion para aproximar la solución de la ecuación Ax = b 
+     * @param A
+     * @param b
+     * @param w peso de relajación
+     * @param tol    tolerancia para condición de parada ( ||Ax-b|| < tolerancia )
+     * @param nmaxit    numero máximo de iteraciones 
+     * @param x0     aproximación inicial
+     * @param print  imprime las distintas iteraciones
+     * @return
+     * @throws auxiliar.Matrices.ErrorMatrices por inconsitencia en los datos, porque haya ceros
+     * en la diagonal de A o porque no haya convergencia en nmax iteraciones
+     */
+    
+    public static double[] iterrelajacion(double[][] A, double[] b, 
+            double w,double tol, int nmaxit, 
+            double[] x0,boolean print)throws ErrorMatrices{
+        if(!ifCuadrada(A)){
+            System.out.println(" Error: Matriz no cuadrada");
+            throw new ErrorMatrices();
+        }
+        int n=A.length;
+        if(b.length != n || x0.length != n ){
+            System.out.println(" Error: dimensiones incompatibles");
+            throw new ErrorMatrices();
+        }
+        double[] xa=copia(x0);
+        //double[] xb=copia(x0);
+        double erroradmisible= tol * tol * norma(b) * norma(b);
+        
+        for (int k = 0; k < nmaxit; k++) {
+            double norma=0;
+            double[] residual=new double[n];
+            for (int i = 0; i < n; i++) {
+                residual[i]=-b[i];
+                for (int j = 0; j < n; j++) {
+                    residual[i] += A[i][j]*xa[j];   
+                }
+                norma += residual[i]*residual[i];
+                xa[i] -= w / A[i][i] * residual[i];
+            }
+            if(norma < erroradmisible){
+                System.out.println("relajación converge en "+ k + 
+                        " iteraciones, para el peso w = "+ w);
+                System.out.println("|| A x - b || = "+ Math.sqrt(norma));
+                return xa;
+            }
+            if(print){
+            System.out.println("k= " + k + "\t  || A x_k - b || = "+Math.sqrt(norma));
+            }
+            
+        }
+        System.out.println("Error relajación: No hay convergencia en "+ nmaxit +
+                " iteraciones con el peso w = "+ w);
+        throw new ErrorMatrices();
+        
+    }
+    
+    /**
+     * Metodo del gradiente conjugado con precondicionamiento para resolver Ax=b considerando en su lugar C^{-1}AC^{-t}X=C{-1}b
+     * con X=C^tx.
+     * @param A es una matriz simetrica definida positiva.
+     * @param C es una matrizEspecial.
+     * @param b
+     * @param x0
+     * @param tol
+     * @return x o excepcion por errores en la ejecucion.
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
+    public static double[] gradienteConjugadoPrecondicionado(MatrizAbstracta A, MatrizEspecial C, double[] b, double[] x0, double tol)throws ErrorMatrices
+    {
+        int n=A.dim();
+        double errorAdmisible=tol*norma(b); //para error relativo
+        //A
+        double[] x=copia(x0);
+        double[] r=resta(b, A.producto(x));
+        if(norma(r)<errorAdmisible)
+        {
+            System.out.println("Gradiente conjugado, paso 0 ");
+            System.out.println("||Ax-b|| = "+ norma(r));
+            System.out.println("||Ax-b||/||b|| = "+ norma(r)/norma(b));
+            return x;
+        }
+        
+        double[] z=C.traspuesta().solve(C.solve(r));
+        double[] v=copia(z);
+        double gamma=producto(r, z);
+        //B
+        for (int i = 1; i <= n; i++) {
+            double[] y=A.producto(v);
+            double nAv=producto(y, v);
+            double t=gamma/nAv;
+            x=suma(x, producto(t, v));
+            r=resta(r, producto(t, y));
+            if(norma(r)<errorAdmisible)
+            {
+                System.out.println("Gradiente conjugado, paso "+i+" de un máximo de "+n);
+                System.out.println("||Ax-b|| = "+ norma(r));
+                System.out.println("||Ax-b||/||b|| = "+ norma(r)/norma(b));
+                return x;
+            }
+            z=C.traspuesta().solve(C.solve(r));
+            double beta=producto(r, z);
+            double s=beta/gamma;
+            gamma=beta;
+            v=suma(z, producto(s, v));
+        }
+        System.err.println("WARNING: Posible inestabilidad en calculos del gradiente conjugado.");
+        System.out.println("Gradiente conjugado, de un máximo de "+n);
+        System.out.println("||Ax-b|| = "+ norma(r));
+        System.out.println("||Ax-b||/||b|| = "+ norma(r)/norma(b));
+        return x;
+    }
+    
+    public static double[] gradienteConjugadoPrecondicionado(double[][] A, MatrizEspecial C, double[] b, double[] x0, double tol) throws ErrorMatrices
+    {
+        Matriz nA=new Matriz(A);
+        return gradienteConjugadoPrecondicionado(nA, C, b, x0, tol);
+    }
+    
+    public static double[] gradienteConjugado(MatrizAbstracta A,double[] b, double[] x0, double tol) throws ErrorMatrices
+    {
+        int n=A.dim();
+        double[] I=new double[n];
+        for(int i=0;i<n;i++) I[i]=1;
+        return gradienteConjugadoPrecondicionado(A, new Diagonal(I), b, x0, tol);
+    }
+
+    public static class tridiagonal implements MatrizAbstracta{
+        double[] dPrinc=new double[2];
+        double[] dInf=new double[1];
+        double[] dSup=new double[1];
+        int n=2;
+        public tridiagonal(double[] dP,double[] dI,double[] dS )
+        {
+            this.dPrinc=copia(dP);
+            this.dInf=copia(dI);
+            this.dSup=copia(dS);
+            this.n=dPrinc.length;
+        }
+        public int dim()
+        {
+            return this.n;
+        }
+        public double[] producto(double[] x)
+        {
+            double[] prod=new double[n];
+            for (int i = 0; i < n; i++) {
+                prod[i]=dPrinc[i]*x[i];
+                if(i>0)
+                    prod[i]+=dInf[i-1]*x[i-1];
+                if(i<n-1)
+                    prod[i]+=dSup[i]*x[i+1];
+            }
+            return prod;
+        }
+        
+    }
 }
 
