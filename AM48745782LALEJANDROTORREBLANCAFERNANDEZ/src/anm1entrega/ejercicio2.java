@@ -21,11 +21,11 @@ public class ejercicio2 {
             //Construimos la matriz del sistema de ecuaciones que queremos resolver con tamaño n.
             for (int i = 0; i < n; i++) {
                 A[i][i]=8;
-                if((i+2)<(n-2))
+                if((i+2)<n)
                     A[i][i+2]=1;
                 if((i-2)>=0)
                     A[i][i-2]=1;
-                if((i+4)<(n-4))
+                if((i+4)<n)
                     A[i][i+4]=2;
                 if((i-4)>=0)
                     A[i][i-4]=2;
@@ -36,10 +36,10 @@ public class ejercicio2 {
             double[] xo = new double[n];
             double[] error = new double[n]; 
 
-            System.out.println("Tamaño de la matriz "+n+":");
+            System.out.println("Tamaño de la matriz "+n+"x"+n+":");
             try {
             //Descomentar si se desea resolver mediante Gauss o Cramer:
-//                sol = Matrices.solveGaussP(A, b);
+//                double[] sol = Matrices.solveGaussP(A, b);
 //                //System.out.println("sol Gauss a A x =b es x "+ Matrices.toString(sol) );
 //                error = Matrices.residual(A, sol, b);
 //                System.out.println("tamaño del error Gauss = " + Matrices.norma(error));
@@ -73,7 +73,7 @@ public class ejercicio2 {
                 System.out.println("tamaño del error GS = " + Matrices.norma(error)+"\n");
                 
                 //Método de Relajación
-                double w = 1.27;
+                double w = 1.27; //w debe tomar valores entre 0 y 2.
                 System.out.println("w= " + w);
                 xiter = Matrices.iterrelajacion(A, b, w, tol, nmaxiter, xo, false);
                 System.out.println("xRelajacion = "+ Matrices.toString(xiter));

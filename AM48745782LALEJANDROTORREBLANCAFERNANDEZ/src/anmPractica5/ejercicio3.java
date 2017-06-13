@@ -29,7 +29,7 @@ public class ejercicio3 {
         dP[n-1]=2*n;
         b[n-1]=1.5*n-6;
         dC[n-1]=Math.sqrt(2*n);
-        auxiliar.Matrices.tridiagonal td=new auxiliar.Matrices.tridiagonal(dP, dI, dI);
+        auxiliar.Matrices.Tridiagonal td=new auxiliar.Matrices.Tridiagonal(dP, dI, dI);
         auxiliar.Matrices.Diagonal C=new auxiliar.Matrices.Diagonal(dC);
         System.out.println("n = "+ n);
         double tol=1E-13;

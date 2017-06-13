@@ -362,4 +362,108 @@ public static class compuesta implements Funcion{
         
         return integral0+integral1;
     }  
+    
+    /**
+     * Metodo para aproximar el jacobiano de una funcion vectorial de variable vectorial
+     * usando la aproximacion numerica de 3 puntos
+     * @param f FuncionVV //funcion
+     * @param x double[] // vector
+     * @param h double // paso para la aproximacion de las derivadas parciales.
+     * @return double[][] //aproximacion al jacobiano
+     */
+
+    public static double[][] jacobianoApp3(FuncionVV f, double[] x, double h){
+
+        int n=f.eval(x).length;
+        int m=x.length;
+        double[][] jacobiano=new double[n][m];
+        double[] xa=Matrices.copia(x);
+        for (int j = 0; j < m; j++) {
+            xa[j]=x[j]-h;
+            double[] fa=f.eval(xa);
+            xa[j]=x[j]+h;
+            double[] fb=f.eval(xa);
+            for (int i = 0; i < n; i++) {
+
+                jacobiano[i][j]=(fb[i]-fa[i])/(2*h);
+
+            }
+            xa=Matrices.copia(x);
+        }
+
+        return jacobiano;
+    }
+
+
+
+     
+
+
+
+     public static class fobj implements FuncionObjetivo{
+            FuncionVVDif F;
+            public fobj(FuncionVVDif f){
+                this.F=f;
+            }
+            public double objetivo(double[] X){
+                int n=X.length;
+                double obj=0;
+                double[] fx=this.F.eval(X);
+                for (int i = 0; i < n; i++) {
+                    obj += fx[i]*fx[i];   
+                }
+                return obj;
+            }
+            public double[] gradiente(double[] X){
+                int n=X.length;
+                double[] fx=this.F.eval(X);
+                double[][] J=this.F.jacobiano(X);
+                double[] grad=new double[n];
+                for (int i = 0; i < n; i++) {
+                    grad[i]=0;
+                    for (int j = 0; j < n; j++) {
+                        grad[j] += 2*fx[j]*J[j][i];  
+                    } 
+                }
+                return grad;
+            }
+            
+            
+        }
+
+    public static class fobjJaprox implements FuncionObjetivo{
+            FuncionVV F;
+            double h=0.001;
+            public fobjJaprox(FuncionVV f, double h){
+                this.F=f;
+                this.h=h;
+            }
+            public double objetivo(double[] X){
+                int n=X.length;
+                double obj=0;
+                double[] fx=this.F.eval(X);
+                for (int i = 0; i < n; i++) {
+                    obj += fx[i]*fx[i];   
+                }
+                return obj;
+            }
+            public double[] gradiente(double[] X){
+                int n=X.length;
+                double[] fx=this.F.eval(X);
+                double[][] J=jacobianoApp3(this.F,X,this.h);
+                double[] grad=new double[n];
+                for (int i = 0; i < n; i++) {
+                    grad[i]=0;
+                    for (int j = 0; j < n; j++) {
+                        grad[j] += 2*fx[j]*J[j][i];  
+                    } 
+                }
+                return grad;
+            }
+            
+            
+        }
+
+  
+      
 }

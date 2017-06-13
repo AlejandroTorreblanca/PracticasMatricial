@@ -18,32 +18,34 @@ public class ejercicio3 {
      */
     public static void main(String[] args) throws Matrices.ErrorMatrices {
         int n=80;
-        System.out.println("Para el tamaño de matriz "+n+":\n");
+        System.out.println("Para el tamaño de matriz "+n+"x"+n+":\n");
         double[][] A=new double[n][n];
             //Construimos la matriz del sistema de ecuaciones que queremos resolver con tamaño n=10.
             for (int i = 0; i < n; i++) {
                 A[i][i]=8;
-                if((i+2)<(n-2))
+                if((i+2)<n)
                     A[i][i+2]=1;
                 if((i-2)>=0)
                     A[i][i-2]=1;
-                if((i+4)<(n-4))
+                if((i+4)<n)
                     A[i][i+4]=2;
                 if((i-4)>=0)
                     A[i][i-4]=2;
             }
-        double[][] auxb=Matrices.MatrizRango(1, n, 1);
-        double[] b=Matrices.copia(auxb[0]);
-        double[] x=Matrices.solveGradienteDescenso(A, b);
-        double[] xo = new double[n];
-        
-        
-        System.out.println("xGradienteDescenso = "+ Matrices.toString(x));
-        double[] error = Matrices.residual(A,  x, b);
-        System.out.println("tamaño del error GradienteDescenso = " + Matrices.norma(error)+"\n");
-        
         try {
-        xo[0] = 1;
+            double[][] auxb=Matrices.MatrizRango(1, n, 1);
+            double[] b=Matrices.copia(auxb[0]);
+            double[] x=Matrices.solveGradienteDescenso(A, b);
+            double[] xo = new double[n];
+        
+            
+                //Método Gradiente con descenso.
+                System.out.println("xGradienteDescenso = "+ Matrices.toString(x));
+                double[] error = Matrices.residual(A,  x, b);
+                System.out.println("tamaño del error GradienteDescenso = " + Matrices.norma(error)+"\n");
+
+
+                xo[0] = 1;
                 xo[1] = -1;
                 xo[2] = 2;
                 xo[5]=3;

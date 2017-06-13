@@ -42,13 +42,13 @@ public class ejercicio1 {
         D=auxiliar.Matrices.producto(A, B);
 
         t2=System.currentTimeMillis();
-        System.out.println("Tiempo en calcular el producto mediante Strassen de dos matrices de tamaño "+n+": "+(t1-t0)+" milisegundos" );
+        System.out.println("Tiempo en calcular el producto mediante Strassen de dos matrices de tamaño "+n+"x"+n+": "+(t1-t0)+" milisegundos" );
         System.out.println("Tiempo en calcular el producto normal de dos matrices de tamaño "+n+": "+(t2-t1)+" milisegundos" );
         System.out.println("norma1 producto Strassen: "+Matrices.norma1(C)+"\nnorma2 producto normal: "+ Matrices.norma1(D)+"\n\n");
         }
         
         /* 
-        Se puede observar que las normas de las matrices siempre coinciden lo que indica que el metodo funciona correctamente.
+        Se puede observar que las normas de las matrices siempre coinciden lo que indica que el método funciona correctamente.
         También vemos que al pasar a un tamaño de n=1024 se tardan varios segundos en obtener el resultado pero mediante Strassen 
         se ejecuta el producto mucho más rápido.
         */

@@ -6,23 +6,17 @@
 package auxiliar;
 
 import ORG.netlib.math.complex.Complex;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
- *
- * @author Antonio Pallares
- *
- * @version 2015.0 (inicial)
- *
- *
- * ANALISIS NUMERICO MATRICIAL - GRADO EN MATEMATICAS - UNIVERSIDAD DE MURCIA
- *
  *
  */
 public class Matrices {
 
     /**
      * Variable precision utilizada para considerar nulos los numeros de menor
-     * tama~no
+     * tamaño
      */
     static double precision = 5E-16;
 
@@ -42,7 +36,9 @@ public class Matrices {
     }
 
     /**
-     * El metodo comprueba si es o no una matriz
+     * Comprueba que la lista doble introducida es una matriz.
+     * @param A
+     * @return 
      */
     public static boolean ifMatriz(double[][] A) {
         int n = A.length;
@@ -293,11 +289,27 @@ public class Matrices {
         return AporB;
     }
 
+    /**
+     * Calcula el vector residual v=Ax-b.
+     * @param A
+     * @param x
+     * @param b
+     * @return
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
     public static double[] residual(double[][] A, double[] x, double[] b)
             throws ErrorMatrices {
         return resta(producto(A, x), b);
     }
 
+    /**
+     * Calcula la norma del vector residual ||Ax-b||.
+     * @param A
+     * @param x
+     * @param b
+     * @return
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
     public static double normaResidual(double[][] A, double[] x, double[] b)
             throws ErrorMatrices {
         return norma(residual(A, x, b));
@@ -630,6 +642,11 @@ public class Matrices {
         return QR;
     }
 
+    /**
+     * Método para construir una matriz identidad de  dimensión n.
+     * @param n
+     * @return 
+     */
     public static double[][] Id(int n) {
         double[][] Id = new double[n][n];
         for (int i = 0; i < Id.length; i++) {
@@ -763,6 +780,12 @@ public class Matrices {
         return traspuesta(invU);
     }
 
+    /**
+     * Métpodo de Doolittle para obtener la descomposición A=LU.
+     * @param A
+     * @return L en la primera posición, U en la segunda.
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
     public static double[][][] LUdootlittle(double[][] A) throws ErrorMatrices {
         if (!ifCuadrada(A)) {
             System.out.println("Error: matriz no cuadrada");
@@ -893,6 +916,11 @@ public class Matrices {
         return solveAscendente(traspuesta(L), solveDescendente(L, b));
     }
 
+    /**
+     * Método que devuelve el determinante de una matriz previamente factorizada LU[][][].
+     * @param LU
+     * @return 
+     */
     public static double determinanteLU(double[][][] LU) {
         int n = LU[0].length;
         double det = 1;
@@ -1198,6 +1226,7 @@ public class Matrices {
 
         public double[] producto(double[] x) throws Matrices.ErrorMatrices;
 
+        public double[][] resta(double[][] x);
     }
 
     public static class Matriz implements MatrizAbstracta {
@@ -1213,7 +1242,12 @@ public class Matrices {
         public int dim() {
             return n;
         }
-
+        
+        public double[][] resta(double[][] x)
+        {
+            return null;
+        }
+        
         public double[] producto(double[] x) throws
                 Matrices.ErrorMatrices {
             return Matrices.producto(A, x);
@@ -1241,7 +1275,11 @@ public class Matrices {
         public int dim() {
             return n;
         }
-
+        public double[][] resta(double[][] x)
+        {
+            return null;
+        }
+        
         public double[] producto(double[] x) throws Matrices.ErrorMatrices {
             if (x.length != n) {
                 System.out.println("Error: dimensión");
@@ -1287,6 +1325,10 @@ public class Matrices {
         public int dim() {
             return this.L.length;
         }
+        public double[][] resta(double[][] x)
+        {
+            return null;
+        }
 
         public double[] producto(double[] x) throws ErrorMatrices {
             return Matrices.producto(this.L, x);
@@ -1312,6 +1354,10 @@ public class Matrices {
 
         public int dim() {
             return this.U.length;
+        }
+        public double[][] resta(double[][] x)
+        {
+            return null;
         }
 
         public double[] producto(double[] x) throws ErrorMatrices {
@@ -1345,7 +1391,7 @@ public class Matrices {
     }
 
     /**
-     * dada una matriz rectangular mxn A, devuelve la matriz R de la
+     * Dada una matriz rectangular mxn A, devuelve la matriz R de la
      * factorización de Householder A=QR
      *
      * @param A
@@ -1828,7 +1874,25 @@ public class Matrices {
      */
     public static double[] solveGradienteDescenso(double[][] A, double[] b) throws ErrorMatrices
     {
+        //Comprobamos que sea simétrica.
+        if(!ifSimetrica(A))
+        {
+            System.err.println("La matriz introducida en el método solveGradienteDescenso no es simétrica.");
+            throw new ErrorMatrices();      
+        }
+        
+        //Comprobamos que sea definida positiva.
+        double[][][] S=FactorLDR(A);
+        double[][] T=S[1];
         int n = A[0].length;
+        for (int i = 0; i < n; i++) {
+            if(T[i][i]<0)
+            {
+                System.err.println("La matriz introducida en el método solveGradienteDescenso no es definida positiva.");
+                throw new ErrorMatrices(); 
+            }
+        }
+        
         double tol=1E-8;
         int MAXITER=500;
         int iteracion=0;
@@ -1858,12 +1922,65 @@ public class Matrices {
         }
         else
         {
-            System.out.println("Superado el número máximo de iteraciones en el método solveGradienteDescenso");
+            System.err.println("Superado el número máximo de iteraciones en el método solveGradienteDescenso");
             throw new ErrorMatrices();
         }
     }
     
-    
+    public static double[] iterJacobi(Tridiagonal T, double[] b, double tol, int nmaxit, 
+            double[] x0,boolean print)throws ErrorMatrices{
+         if(((T.dPrinc.length-T.dInf.length)!=1) || ((T.dPrinc.length-T.dSup.length)!=1)){//Cambiamos la condición de que sea cuadrada.
+            System.out.println(" Error: Matriz no cuadrada");
+            throw new ErrorMatrices();
+        }
+        int n=T.dim();
+        if(b.length != n || x0.length != n ){
+            System.out.println(" Error: dimensiones incompatibles");
+            throw new ErrorMatrices();
+        }
+        double[] xa=copia(x0);
+        //double[] xb=copia(x0);
+        double erroradmisible= tol * tol * norma(b) * norma(b);
+        
+        for (int k = 0; k < nmaxit; k++) {
+            double norma=0;
+            double[] residual=new double[n];
+            for (int i = 0; i < n; i++) {
+                residual[i]=-b[i];
+                if(i==0){   //Las optimizaciones las podemos hacer aqui ya que en cada fila solo tres casillas son distintas de 0.
+                    residual[i]+=T.dPrinc[i]*xa[i];
+                    residual[i]+=T.dSup[i]*xa[i+1];
+                }
+                else if(i==n-1){
+                    residual[i]+=T.dPrinc[i]*xa[i];
+                    residual[i]+=T.dInf[i-1]*xa[i-1];
+                }
+                else
+                {
+                    residual[i]+=T.dPrinc[i]*xa[i];
+                    residual[i]+=T.dSup[i]*xa[i+1];
+                    residual[i]+=T.dInf[i-1]*xa[i-1];
+                }
+                norma += residual[i]*residual[i];
+            
+            
+            }
+            if(norma < erroradmisible){
+                System.out.println("Jacobi converge en "+ k + " iteraciones");
+                System.out.println("|| A x - b || = "+ Math.sqrt(norma));
+                return xa;
+            }
+            if(print){
+            System.out.println("k= " + k + "\t  || A x_k - b || = "+ Math.sqrt(norma));
+            }
+            for (int i = 0; i < n; i++) {
+                xa[i] -= 1. / T.dPrinc[i] * residual[i];
+            }
+        }
+        System.out.println("Error Jacobi: No hay convergencia en "+ nmaxit +
+                " iteraciones");
+        throw new ErrorMatrices();
+    }
     
     /**
      * Metodo de Jacobi para aproximar la solución de la ecuación Ax = b 
@@ -1877,7 +1994,6 @@ public class Matrices {
      * @throws auxiliar.Matrices.ErrorMatrices por inconsitencia en los datos, porque haya ceros
      * en la diagonal de A o porque no haya convergencia en nmax iteraciones
      */
-    
     public static double[] iterJacobi(double[][] A, double[] b, double tol, int nmaxit, 
             double[] x0,boolean print)throws ErrorMatrices{
         if(!ifCuadrada(A)){
@@ -1921,6 +2037,61 @@ public class Matrices {
         
     }
     
+    public static double[] iterGaussSeidel(Tridiagonal T, double[] b, double tol, int nmaxit, 
+            double[] x0,boolean print)throws ErrorMatrices{
+        if(((T.dPrinc.length-T.dInf.length)!=1) || ((T.dPrinc.length-T.dSup.length)!=1)){
+            System.out.println(" Error: Matriz no cuadrada");
+            throw new ErrorMatrices();
+        }
+        int n=T.dim();
+        if(b.length != n || x0.length != n ){
+            System.out.println(" Error: dimensiones incompatibles");
+            throw new ErrorMatrices();
+        }
+        double[] xa=copia(x0);
+        //double[] xb=copia(x0);
+        double erroradmisible= tol * tol * norma(b) * norma(b);
+        
+        for (int k = 0; k < nmaxit; k++) {
+            double norma=0;
+            double[] residual=new double[n];
+            for (int i = 0; i < n; i++) {
+                residual[i]=-b[i];
+                
+                if(i==0){   //Las optimizaciones las podemos hacer aqui ya que en cada fila solo tres casillas son distintas de 0.
+                    residual[i]+=T.dPrinc[i]*xa[i];
+                    residual[i]+=T.dSup[i]*xa[i+1];
+                }
+                else if(i==n-1){
+                    residual[i]+=T.dPrinc[i]*xa[i];
+                    residual[i]+=T.dInf[i-1]*xa[i-1];
+                }
+                else
+                {
+                    residual[i]+=T.dPrinc[i]*xa[i];
+                    residual[i]+=T.dSup[i]*xa[i+1];
+                    residual[i]+=T.dInf[i-1]*xa[i-1];
+                }
+                
+                norma += residual[i]*residual[i];
+                xa[i] -= 1. / T.dPrinc[i] * residual[i];
+            }
+            if(norma < erroradmisible){
+                System.out.println("Gauss-Seidel converge en "+ k + " iteraciones");
+                System.out.println("|| A x - b || = "+ Math.sqrt(norma));
+                return xa;
+            }
+            if(print){
+            System.out.println("k= " + k + "\t  || A x_k - b || = "+ Math.sqrt(norma));
+            }
+            
+        }
+        System.out.println("Error Gauss-Seidel: No hay convergencia en "+ nmaxit +
+                " iteraciones");
+        throw new ErrorMatrices();
+        
+    }
+    
         /**
      * Metodo de Gauss-Seidel para aproximar la solución de la ecuación Ax = b 
      * @param A
@@ -1933,7 +2104,6 @@ public class Matrices {
      * @throws auxiliar.Matrices.ErrorMatrices por inconsitencia en los datos, porque haya ceros
      * en la diagonal de A o porque no haya convergencia en nmax iteraciones
      */
-    
     public static double[] iterGaussSeidel(double[][] A, double[] b, double tol, int nmaxit, 
             double[] x0,boolean print)throws ErrorMatrices{
         if(!ifCuadrada(A)){
@@ -1976,6 +2146,61 @@ public class Matrices {
         
     }
     
+    public static double[] iterrelajacion(Tridiagonal T, double[] b, 
+            double w,double tol, int nmaxit, 
+            double[] x0,boolean print)throws ErrorMatrices{
+        if(((T.dPrinc.length-T.dInf.length)!=1) || ((T.dPrinc.length-T.dSup.length)!=1)){
+            System.out.println(" Error: Matriz no cuadrada");
+            throw new ErrorMatrices();
+        }
+        int n=T.dim();
+        if(b.length != n || x0.length != n ){
+            System.out.println(" Error: dimensiones incompatibles");
+            throw new ErrorMatrices();
+        }
+        double[] xa=copia(x0);
+        //double[] xb=copia(x0);
+        double erroradmisible= tol * tol * norma(b) * norma(b);
+        
+        for (int k = 0; k < nmaxit; k++) {
+            double norma=0;
+            double[] residual=new double[n];
+            for (int i = 0; i < n; i++) {
+                residual[i]=-b[i];
+                if(i==0){   //Las optimizaciones las podemos hacer aqui ya que en cada fila solo tres casillas son distintas de 0.
+                    residual[i]+=T.dPrinc[i]*xa[i];
+                    residual[i]+=T.dSup[i]*xa[i+1];
+                }
+                else if(i==n-1){
+                    residual[i]+=T.dPrinc[i]*xa[i];
+                    residual[i]+=T.dInf[i-1]*xa[i-1];
+                }
+                else
+                {
+                    residual[i]+=T.dPrinc[i]*xa[i];
+                    residual[i]+=T.dSup[i]*xa[i+1];
+                    residual[i]+=T.dInf[i-1]*xa[i-1];
+                }
+                norma += residual[i]*residual[i];
+                xa[i] -= w / T.dPrinc[i] * residual[i];
+            }
+            if(norma < erroradmisible){
+                System.out.println("relajación converge en "+ k + 
+                        " iteraciones, para el peso w = "+ w);
+                System.out.println("|| A x - b || = "+ Math.sqrt(norma));
+                return xa;
+            }
+            if(print){
+            System.out.println("k= " + k + "\t  || A x_k - b || = "+Math.sqrt(norma));
+            }
+            
+        }
+        System.out.println("Error relajación: No hay convergencia en "+ nmaxit +
+                " iteraciones con el peso w = "+ w);
+        throw new ErrorMatrices();
+        
+    }
+    
         /**
      * Metodo de relajacion para aproximar la solución de la ecuación Ax = b 
      * @param A
@@ -1989,7 +2214,6 @@ public class Matrices {
      * @throws auxiliar.Matrices.ErrorMatrices por inconsitencia en los datos, porque haya ceros
      * en la diagonal de A o porque no haya convergencia en nmax iteraciones
      */
-    
     public static double[] iterrelajacion(double[][] A, double[] b, 
             double w,double tol, int nmaxit, 
             double[] x0,boolean print)throws ErrorMatrices{
@@ -2033,6 +2257,25 @@ public class Matrices {
         throw new ErrorMatrices();
         
     }
+    
+//    public static double[] iterrelajacion(Tridiagonal A, double[] b, 
+//            double w,double tol, int nmaxit, 
+//            double[] x0,boolean print)throws ErrorMatrices{
+//        
+//        int n=A.dim();
+//        double[][] p=new double[n][n];
+//            for (int i = 0; i < n; i++) {
+//                for (int j = 0; j < n; j++) {
+//                    if(i==j)
+//                        p[i][j]=A.dPrinc[i];
+//                    else if (i==j-1)
+//                        p[i][j]=A.dSup[i];
+//                    else if (i==j+1)
+//                        p[i][j]=A.dInf[j];
+//                }
+//            }
+//        return iterrelajacion(p, b, w, tol, nmaxit, x0, print);
+//    }
     
     /**
      * Metodo del gradiente conjugado con precondicionamiento para resolver Ax=b considerando en su lugar C^{-1}AC^{-t}X=C{-1}b
@@ -2104,17 +2347,30 @@ public class Matrices {
         return gradienteConjugadoPrecondicionado(A, new Diagonal(I), b, x0, tol);
     }
 
-    public static class tridiagonal implements MatrizAbstracta{
+    public static class Tridiagonal implements MatrizAbstracta{
         double[] dPrinc=new double[2];
         double[] dInf=new double[1];
         double[] dSup=new double[1];
         int n=2;
-        public tridiagonal(double[] dP,double[] dI,double[] dS )
+        public Tridiagonal(double[] dP,double[] dI,double[] dS )
         {
             this.dPrinc=copia(dP);
             this.dInf=copia(dI);
             this.dSup=copia(dS);
             this.n=dPrinc.length;
+//            double[][] p=new double[n][n];
+//            for (int i = 0; i < n; i++) {
+//                for (int j = 0; j < n; j++) {
+//                    if(i==j)
+//                        p[i][j]=dPrinc[i];
+//                    else if (i==j-1)
+//                        p[i][j]=dSup[i];
+//                    else if (i==j+1)
+//                        p[i][j]=dInf[j];
+//                                        
+//                }
+//            }
+//            System.out.println("tridiagonal: " + Matrices.toString(p));
         }
         public int dim()
         {
@@ -2132,7 +2388,538 @@ public class Matrices {
             }
             return prod;
         }
+        public double[][] resta(double[][] x)
+        {
+            double[][] resta=new double[n][n];   
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < resta.length; j++) {
+                    if(i==j)
+                        resta[i][j]=dPrinc[i]-x[i][j];
+                    else if (i==j+1)
+                        resta[i][j]=dSup[j];
+                    else if (i==j-1)
+                        resta[i][j]=dInf[i];
+                                       
+                }
+            }
+            return resta;
+        }
+        
+    }
+    
+     /**
+     * Metodo de la potencia para aproximar el valor propio dominante y un
+     * vector propio asociado.
+     *
+     * @param A matriz
+     * @param tol tolerancia para controlar error
+     * @param nmax numero maximo de iteraciones
+     * @param v vector inicial
+     * @param y direccion busqueda fija
+     * @return un vector de dimension n + 1 donde las n primeras coordenadas son
+     * las del vector propio y la última coordenada es el valor propio
+     * @throws auxiliar.Matrices.ErrorMatrices
+     */
+    public static double[] potencia(MatrizAbstracta A, double tol,
+            int nmax, double[] x0, double[] y) throws ErrorMatrices {
+        
+        int n = A.dim();
+        double[] solucion = new double[n + 1];
+        double[] Yini = copia(x0); // Para guardar Y_k
+        double[] Yfin;  // Para guardar (A Y_k) e (Y_{k+1})
+        double rini = 0; // Para guardar r_k
+        double rfin; // Para guardar r_{k+1}
+        
+        Yini = producto(1. / norma(Yini), Yini);  // Y_0= x0/||x0||
+        double prod1=producto(y, Yini);
+        for (int m = 1; m <= nmax; m++) {           
+            if (Math.abs(prod1) < precision) {
+                System.out.println("Error: el metodo no aplica y perp a x0");
+                throw new ErrorMatrices();
+            }
+            Yfin = A.producto(Yini);  // Yfin= A Y_k
+            if (norma(Yfin) < precision) {
+                System.out.println("Error: el metodo no aplica: valor propio nulo");
+                throw new ErrorMatrices();
+            }
+            double prod2=producto(Yfin, y);
+            rfin = prod2 / prod1; //rfin=r_{k+1}  candidato a valor propio
+            
+            prod1= prod2 /norma(Yfin);
+            
+            Yfin = producto(1. / norma(Yfin), Yfin); // Yfin= Y_{k+1} candidato a vector propio
+            double[] control = resta(producto(rfin, Yfin), A.producto(Yfin)); // ||A Y_{k+1} - rfin Y_{k+1}||
+           // System.out.println("control "+rfin);
+            if (Math.abs(rfin - rini) < tol && norma(control) < tol) { 
+                //System.out.println("Método de la potencia converge en "+ m + " pasos ");
+                //System.out.println("valor propio (potencia) en " + rfin);
+                //System.out.println("vector propio en x="+ Matrices.toString(Yfin));
+                solucion[n] = rfin;
+                System.arraycopy(Yfin, 0, solucion, 0, n);
+                return solucion;
+            }
+            rini = rfin;
+            Yini = copia(Yfin);
+           
+
+        }
+        System.out.println("Error: no hay convergencia en "
+                + nmax + " iteraciones ");
+        throw new ErrorMatrices();
+    }
+
+     /**
+     * Metodo de la potencia para aproximar el valor propio dominante y un
+     * vector propio asociado.
+     *
+     * @param A matriz
+     * @param tol tolerancia para controlar error
+     * @param nmax numero maximo de iteraciones
+     * @param v vector inicial
+     * @param y direccion busqueda fija
+     * @return un vector de dimension n + 1 donde las n primeras coordenadas son
+     * las del vector propio y la última coordenada es el valor propio
+     * @throws auxiliar.Matrices.ErrorMatrices
+     */
+    public static double[] potencia(double[][] A, double tol,
+            int nmax, double[] v, double[] y) throws ErrorMatrices {
+        Matriz nA=new Matriz(A);
+        return potencia(nA, tol, nmax, v, y);
+    }
+
+
+    /**
+     * metodo de la potencia inversa con desplazamiento para aproximar
+     * el valor propio de A más próximo a mu.
+     * @param A
+     * @param mu
+     * @param tol
+     * @param nmax
+     * @param v
+     * @param y
+     * @return un vector donde en las primeras coordenadas están las del vector
+     * propio y en la última el valor propio más próximo a mu
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
+    public static double[] potenciaInversaDesplazada(MatrizAbstracta A, double mu, double tol,
+            int nmax, double[] v, double[] y) throws ErrorMatrices {
+        int n=A.dim();
+        double[][] nuId=producto(mu, Id(n));
+        double[][] inversaDesplazada=inversaGauss(A.resta(nuId));
+        double[] vecYvalPropio=potencia(inversaDesplazada, tol, nmax, v, y);
+        vecYvalPropio[n]=mu+1./vecYvalPropio[n];
+        //System.out.println("valor propio (mu) = "+vecYvalPropio[n]);
+        return vecYvalPropio;
+    }
+    
+
+
+    /**
+     * metodo de la potencia inversa con desplazamiento para aproximar
+     * el valor propio de A más próximo a mu.
+     * @param A
+     * @param mu
+     * @param tol
+     * @param nmax
+     * @param v
+     * @param y
+     * @return un vector donde en las primeras coordenadas están las del vector
+     * propio y en la última el valor propio más próximo a mu
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
+    public static double[] potenciaInversaDesplazada(double[][] A, double mu, double tol,
+            int nmax, double[] v, double[] y) throws ErrorMatrices {
+        int n=A.length;
+        double[][] nuId=producto(mu, Id(n));
+        double[][] inversaDesplazada=inversaGauss(resta(A,nuId));
+        double[] vecYvalPropio=potencia(inversaDesplazada, tol, nmax, v, y);
+        vecYvalPropio[n]=mu+1./vecYvalPropio[n];
+        System.out.println("valor propio (mu) = "+vecYvalPropio[n]);
+        return vecYvalPropio;
+    }
+
+
+
+    /**
+     * Método de Jacobi para aproximar simultáneamente los valores y vectores 
+     * propios de una matriz simétrica A
+     * @param A es la matriz simétrica
+     * @param tol
+     * @param nmaxit
+     * @return una matriz donde en cada fila tendremos un vector propio en las 
+     * primeras coordenadas y el valor propio asociado en la última coordenada
+     * @throws auxiliar.Matrices.ErrorMatrices  si A no es simétrica o se sobrepasa 
+     * el número máximo de etapas.
+     */
+    public static double[][] jacobiPropios(double[][] A, double tol, int nmaxit)
+            throws ErrorMatrices{
+        if(!ifSimetrica(A)){
+            System.out.println("JacobiPropios error : Matriz no simétrica");
+            throw new ErrorMatrices();
+        }
+        int n=A.length;
+        double[][] O=Id(n);
+        double[][] B=copia(A);
+        for (int k = 0; k < nmaxit; k++) {
+           int p=0, q=0;
+           double aux=0;
+            for (int i = 0; i <n; i++) {
+                for (int j = i+1; j < B.length; j++) {
+                    if(Math.abs(B[i][j])> aux){
+                        p=i;
+                        q=j;
+                        aux=Math.abs(B[i][j]);
+                    }
+                }
+            }
+            if(n*(n-1)*aux < 100*precision){
+                for (int i = 0; i <n; i++) {
+                    for (int j = i+1; j < n; j++) {
+                        if(Math.abs(B[i][i]-B[j][j])<100*precision){
+                            System.out.println("JacobiPropios "
+                                    + "ADVERTENCIA : Posible error en base de"
+                                    + "vectores propios");
+                        }
+                    }
+                }
+                double[][] Sol=new double[n][n+1];
+                double[][] Ot=traspuesta(O);
+                for (int i = 0; i < n; i++) {
+                   Sol[i][n]=B[i][i];
+                   System.arraycopy(Ot[i], 0, Sol[i], 0, n);
+                    //System.out.println("|| A v - lambda v || "+ normaresidualPropios(A, Sol[i]));
+                }
+                //System.out.println("JacobiPropios: converge en "
+                //        + k + " etapas");
+                return Sol;
+            }
+            double x=(B[q][q]-B[p][p])/(2*B[p][q]);
+            double t;
+            if(x>=0){
+                t=-x+Math.sqrt(1+x*x);
+            }else{
+                t=-x-Math.sqrt(1+x*x);
+            }
+            double c=1./Math.sqrt(1+t*t);
+            double s=t/Math.sqrt(1+t*t);
+            //giro en O por la derecha
+            for (int i = 0; i < n; i++) {
+                aux=O[i][p];
+                O[i][p]=c*aux - s*O[i][q];
+                O[i][q]=s*aux + c*O[i][q];
+            }
+            // giros en B por la izda y la derecha
+            B[p][p] -= t*B[p][q];
+            B[q][q] += t*B[p][q];
+            B[p][q]=0;
+            B[q][p]=0;
+            for (int i = 0; i < n; i++) {
+                if((i!=p) && (i!=q)){
+                    aux = B[i][p];
+                    B[i][p]=c*aux -s *B[i][q];
+                    B[p][i]=B[i][p];
+                    B[i][q]=s*aux + c*B[i][q];
+                    B[q][i]=B[i][q];
+                }           
+            } 
+           //escribe(B);
+        }
+        System.out.println("JacobiPropios error : no hay convergencia en"
+                + nmaxit + " etapas");
+        throw new ErrorMatrices();
+        
+    }
+
+   public static double normaresidualPropios(double[][] A,double[] VectYValPropio) throws ErrorMatrices{
+        int n=VectYValPropio.length-1;
+        double[] vectprop=new double[n];
+        System.arraycopy(VectYValPropio, 0,vectprop, 0, n);
+        double[] residualPropio=producto(A, vectprop);
+        residualPropio=resta(residualPropio, 
+                producto(VectYValPropio[n], vectprop));
+        return norma(residualPropio);
+    }
+    
+    public static double[][] QRpropios(double[][] A, double prec, double precDesplazamiento,
+            int nmax)throws ErrorMatrices{
+        int n=A.length;
+        double[][] QRpropios=new double[n][n+1];
+        double[][] B=copia(A);
+        double[][][] QRB=new double[2][n][n];
+        QRB[0]=Id(n);
+        for (int k = 0; k < nmax; k++) {
+            double sub=0;// suma de los modulos de los terminos bajo diagonal
+            for (int i = 1; i < n; i++) {
+                for (int j = 0; j < i; j++) {
+                   sub += B[i][j]*B[i][j];
+                }
+            }
+            if(sub < prec){
+                System.out.println("QR propios converge en "+ k + " etapas");
+                // TRASPONEMOS  Q para que los vectores fila sean buenas
+                // direcciones en la busqueda de vectores propios
+                QRB[0]=traspuesta(QRB[0]);
+                for (int i = 0; i < n; i++) {
+                   QRpropios[i]=potenciaInversaDesplazada(A, B[i][i]+precDesplazamiento
+                           , prec, nmax, QRB[0][i], QRB[0][i]);
+                    System.out.println("||A v_k - lambda_k v_k || = "
+                         + normaresidualPropios(A, QRpropios[i])); 
+                }
+                return QRpropios;
+            }
+            QRB=factorQR(B);
+            B=producto(QRB[1],QRB[0]);
+            
+        }
+        System.out.println("QR propios: no converge en "+ nmax + " etapas");
+        throw new ErrorMatrices();
+    }
+    
+     /**
+     * Metodo QR para aproximar los valores propios de una matriz tridiagonal simétrica
+     * 
+     * @param T Objeto de la clase tridiagonal
+     * @param tol tolerancia para condición de parada (no es necesario que sea muy fino)
+     * @param nmax número máximo de iteraciones
+     * @return un vector a con las aproximaciones a todos los valores propios.
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
+    public static double[] TriDiagPropiosQR1(Tridiagonal T, double tol, int nmax)
+            throws ErrorMatrices{
+        int n=T.dim();
+        double[] a=copia(T.dPrinc); //diagonal principal de A_k=R_k Q_k que es tridiagonal
+        double[] b=copia(T.dInf); //diagonal inferior (y superior) de A_k
+        double[] x=new double[n];//para pasos intermedios en calculo de R_k (diagonal pal)
+        double[] y=new double[n];//para pasos intermedios en calculo de R_k (diagonal sup)
+        double[] z=new double[n];//para la diagonal de R_k
+        double[] q=new double[n-1];//para la primera diagonal superior de R_k
+       // double[] r=new double[n-2];//  para los valores de la segunda diagonal superior 
+                                   //de R_k pero no se necesitan usar por la simetría de A_k
+        double[] c=new double[n]; //para los cosenos de los giros
+        double[] s=new double[n]; //para los senos de los giros
+        
+        for (int k = 0; k < nmax; k++) {
+            x[0]=a[0];
+            y[0]=b[0];
+            for (int i = 0; i < n-1; i++) {
+                z[i]=Math.sqrt(x[i]*x[i]+b[i]*b[i]);
+                if(z[i]<precision){
+                    c[i]=1;
+                    s[i]=0;
+                }else{
+                    c[i]=x[i]/z[i];
+                    s[i]=b[i]/z[i];
+                }
+                q[i]=c[i]*y[i]+s[i]*a[i+1];
+                x[i+1]=-s[i]*y[i]+c[i]*a[i+1];
+                if(i<n-2){
+                   // r[i]=s[i]*b[i+1];
+                    y[i+1]=c[i]*b[i+1];
+                } 
+            }
+            z[n-1]=x[n-1]; //hasta aquí calculamos R_k
+            //Ahora hacemos R_k Q_k
+            a[0]=s[0]*q[0]+c[0]*z[0];
+            b[0]=s[0]*z[1];
+            double normasub=b[0]*b[0];
+            for (int i = 1; i < n-1; i++) {
+                a[i]=s[i]*q[i]+c[i]*c[i-1]*z[i];
+                b[i]=s[i]*z[i+1];
+                normasub +=b[i]*b[i];
+            }
+            a[n-1]=c[n-2]*z[n-1];
+            if(Math.sqrt(normasub)< tol){
+                //System.out.println(" "+ toString(a));
+                return a;
+            } 
+            //System.out.println("a + "+ toString(a));
+            //System.out.println("b + "+ toString(b));
+        }
+       
+        System.out.println("QRpropios (tridiagonal) no converge en "
+                + nmax + "  iteraciones");
+        throw new ErrorMatrices();
+        
+    }
+    
+    /**
+     * Metodo QR para aproximar los valores y vectores propios de una matriz tridiagonal simétrica
+     * 
+     * @param T Objeto de la clase tridiagonal
+     * @param tol tolerancia para condición de parada (no es necesario que sea muy fino)
+     * @param nmax número máximo de iteraciones
+     * @return un vector a con las aproximaciones a todos los valores propios.
+     * @throws auxiliar.Matrices.ErrorMatrices 
+     */
+    public static double[][] TriDiagPropiosQR(Tridiagonal T, double tol, int nmax)
+            throws ErrorMatrices{
+        int n=T.dim();
+        double[] a=copia(T.dPrinc); //diagonal principal de A_k=R_k Q_k que es tridiagonal
+        double[] b=copia(T.dInf); //diagonal inferior (y superior) de A_k
+        double[] x=new double[n];//para pasos intermedios en calculo de R_k (diagonal pal)
+        double[] y=new double[n];//para pasos intermedios en calculo de R_k (diagonal sup)
+        double[] z=new double[n];//para la diagonal de R_k
+        double[] q=new double[n-1];//para la primera diagonal superior de R_k
+       // double[] r=new double[n-2];//  para los valores de la segunda diagonal superior 
+                                   //de R_k pero no se necesitan usar por la simetría de A_k
+        double[] c=new double[n]; //para los cosenos de los giros
+        double[] s=new double[n]; //para los senos de los giros
+        
+        for (int k = 0; k < nmax; k++) {
+            x[0]=a[0];
+            y[0]=b[0];
+            for (int i = 0; i < n-1; i++) {
+                z[i]=Math.sqrt(x[i]*x[i]+b[i]*b[i]);
+                if(z[i]<precision){
+                    c[i]=1;
+                    s[i]=0;
+                }else{
+                    c[i]=x[i]/z[i];
+                    s[i]=b[i]/z[i];
+                }
+                q[i]=c[i]*y[i]+s[i]*a[i+1];
+                x[i+1]=-s[i]*y[i]+c[i]*a[i+1];
+                if(i<n-2){
+                   // r[i]=s[i]*b[i+1];
+                    y[i+1]=c[i]*b[i+1];
+                } 
+            }
+            z[n-1]=x[n-1]; //hasta aquí calculamos R_k
+            //Ahora hacemos R_k Q_k
+            a[0]=s[0]*q[0]+c[0]*z[0];
+            b[0]=s[0]*z[1];
+            double normasub=b[0]*b[0];
+            for (int i = 1; i < n-1; i++) {
+                a[i]=s[i]*q[i]+c[i]*c[i-1]*z[i];
+                b[i]=s[i]*z[i+1];
+                normasub +=b[i]*b[i];
+            }
+            a[n-1]=c[n-2]*z[n-1];
+            if(Math.sqrt(normasub)< tol){
+                System.out.println("Valores propios: "+ toString(a));
+                double[] y0=new double[n];
+                y0[0]=1;
+                double[][] r= new double[n][n+1];
+                for (int i = 0; i < a.length; i++) {
+                    r[i]=potenciaInversaDesplazada(T, a[i]-0.001, tol, nmax, y0, y0);
+                }
+                return r;
+            } 
+            //System.out.println("a + "+ toString(a));
+            //System.out.println("b + "+ toString(b));
+        }
+       
+        System.out.println("QRpropios (tridiagonal) no converge en "
+                + nmax + "  iteraciones");
+        throw new ErrorMatrices();
+        
+    }
+    
+    /**
+     * Método para obtener una  matriz tridiagonal simétrica a partir de una matriz simétrica A.
+     * Se ha seguido le algoritmo de la sección 9.3 de Burden-Faires.
+     * @param A
+     * @return Matriz tridiagonal R y su cambio de base Q.
+     */
+    public static double[][][] QRTriDiag(double[][] A)
+    {
+        int n=A.length;
+        double alpha;
+        double[][] P=Matrices.Id(n);
+        
+    //Paso 1
+        for (int k = 0; k < n-2; k++) {
+            double[][] Pk=Matrices.Id(n);
+            double q=0;
+            
+        //Paso 2    
+            for (int j = k+1; j < n; j++) {
+                q+=A[j][k]*A[j][k];
+            }
+            
+        //Paso 3    
+            if(A[k+1][k]==0)
+                alpha=-1*Math.sqrt(q);
+            else
+                alpha=-1*(Math.sqrt(q)*A[k+1][k])/Math.abs(A[k+1][k]);
+            
+        //Paso 4    
+            double RSQ=alpha*alpha-alpha*A[k+1][k];
+            double[] v=new double[n];
+            double[] w=new double[n];
+            
+        //Paso 5
+            v[k+1]=A[k+1][k]-alpha;
+            for (int j = k+2; j < n; j++) {
+                v[j]=A[j][k];
+            }
+            for (int j = k+1; j < n; j++) { //Este paso nos sirve para calcular la matriz de cambio de base P.
+                w[j]=v[j]/(Math.sqrt(2*RSQ));
+
+            }
+            
+        //Paso 6    
+            double[] u=new double[n];
+            for (int j = k; j < n; j++) {
+                double aux=0;
+                for (int i = k+1; i < n; i++) {
+                    aux+=A[j][i]*v[i];
+                    
+                }
+                u[j]=(aux/RSQ);
+            }
+            
+        //Paso 7    
+            double PROD=0;
+            for (int i = k+1; i < n; i++) {
+                PROD+=v[i]*u[i];
+            }
+           
+        //Paso 8    
+            double[] z=new double[n];
+            for (int j = k; j < n; j++) {
+                z[j]=u[j]-(PROD/(2*RSQ))*v[j];
+            }
+            
+        //Paso 9    
+            for (int l = k+1; l < n-1; l++) {
+            //Paso 10    
+                for (int j = l+1; j < n; j++) {
+                    A[j][l]=A[j][l]-v[l]*z[j]-v[j]*z[l];
+                    A[l][j]=A[j][l];
+                }
+            //Paso 11
+                A[l][l]=A[l][l]-2*v[l]*z[l];
+            }
+            
+        //Paso 12    
+            A[n-1][n-1]=A[n-1][n-1]-2*v[n-1]*z[n-1];
+            
+        //Paso 13    
+            for (int j = k+2; j < n; j++) {
+                A[k][j]=0;
+                A[j][k]=0;
+            }
+            
+        //Paso 14
+            A[k+1][k]=A[k+1][k]-v[k+1]*z[k];
+            A[k][k+1]=A[k+1][k];
+            double[][] M=new double[n][n];
+            for (int i = 0; i < n; i++) {
+                for (int j = 0; j < n; j++) {
+                    M[i][j]=w[i]*w[j]*2;
+                }
+            }
+            try {
+                Pk=Matrices.resta(Pk, M);
+                P=Matrices.producto(P, Pk);
+            } catch (ErrorMatrices ex) {
+            }
+        }
+        double[][][] resultado=new double[2][n][n];
+        resultado[0]=A;
+        resultado[1]=P;
+        return resultado;
         
     }
 }
-
